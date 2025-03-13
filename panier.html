@@ -216,12 +216,12 @@
     let cartContainer = document.getElementById("cart-items-container");
     let emptyCartMessage = document.getElementById("empty-cart-message");
 
-    cartContainer.innerHTML = ""; // On vide le conteneur
+    cartContainer.innerHTML = ""; // Vide le conteneur
 
     if (panier.length === 0) {
-        emptyCartMessage.classList.remove("hidden"); // Afficher "Votre panier est vide"
+        emptyCartMessage.classList.remove("hidden"); // Affiche "Votre panier est vide"
     } else {
-        emptyCartMessage.classList.add("hidden"); // Cacher le message
+        emptyCartMessage.classList.add("hidden"); // Cache le message
         let total = 0;
 
         panier.forEach((produit, index) => {
@@ -267,14 +267,13 @@ function supprimerDuPanier(index) {
     location.reload();
 }
 
-// Modifier la quantité
+// Modifier la quantité d'un produit
 function modifierQuantite(index, nouvelleQuantite) {
     let panier = JSON.parse(localStorage.getItem("panier")) || [];
     panier[index].quantite = parseInt(nouvelleQuantite);
     localStorage.setItem("panier", JSON.stringify(panier));
     location.reload();
 }
-
 </script>
 </htmlCode>
 <htmlCode>
