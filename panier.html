@@ -211,118 +211,70 @@
 </div>
 
 <script>
-  // Cart item quantity management
-  document.querySelectorAll('#cart-items-container input').forEach(input => {
-    const decrementBtn = input.previousElementSibling;
-    const incrementBtn = input.nextElementSibling;
-    
-    decrementBtn.addEventListener('click', () => {
-      if (parseInt(input.value) > 1) {
-        input.value = parseInt(input.value) - 1;
-        updateItemTotal(input);
-      }
-    });
-    
-    incrementBtn.addEventListener('click', () => {
-      input.value = parseInt(input.value) + 1;
-      updateItemTotal(input);
-    });
-    
-    input.addEventListener('change', () => {
-      // Ensure value is at least 1
-      if (parseInt(input.value) < 1 || isNaN(parseInt(input.value))) {
-        input.value = 1;
-      }
-      updateItemTotal(input);
-    });
-  });
-  
-  // Function to update item total price
-  function updateItemTotal(input) {
-    const itemRow = input.closest('.grid');
-    const priceCell = itemRow.querySelector('div:nth-child(2) span:last-child');
-    const totalCell = itemRow.querySelector('div:nth-child(4) span:last-child');
-    
-    const priceText = priceCell.textContent;
-    let price;
-    
-    // Handle monthly price format (€3/mois)
-    if (priceText.includes('/mois')) {
-      price = parseFloat(priceText.replace('€', '').split('/')[0]);
-      const quantity = parseInt(input.value);
-      totalCell.textContent = '€' + (price * quantity);
+  document.addEventListener("DOMContentLoaded", function () {
+    let panier = JSON.parse(localStorage.getItem("panier")) || [];
+    let cartContainer = document.getElementById("cart-items-container");
+    let emptyCartMessage = document.getElementById("empty-cart-message");
+
+    cartContainer.innerHTML = ""; // On vide le conteneur
+
+    if (panier.length === 0) {
+        emptyCartMessage.classList.remove("hidden"); // Afficher "Votre panier est vide"
     } else {
-      price = parseFloat(priceText.replace('€', ''));
-      const quantity = parseInt(input.value);
-      totalCell.textContent = '€' + (price * quantity);
+        emptyCartMessage.classList.add("hidden"); // Cacher le message
+        let total = 0;
+
+        panier.forEach((produit, index) => {
+            total += produit.prix * produit.quantite;
+
+            let produitHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 py-6 items-center">
+                <div class="col-span-1 md:col-span-6 flex items-center space-x-4">
+                    <div class="relative">
+                        <img src="${produit.image}" alt="${produit.nom}" class="w-20 h-20 md:w-24 md:h-24 object-cover rounded">
+                        <button onclick="supprimerDuPanier(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors">
+                            <span class="sr-only">Supprimer</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-lg">${produit.nom}</h3>
+                        <p class="text-sm text-gray-600">${produit.description}</p>
+                    </div>
+                </div>
+                <div class="col-span-1 md:col-span-2 text-center">€${produit.prix}</div>
+                <div class="col-span-1 md:col-span-2 text-center">
+                    <input type="number" value="${produit.quantite}" min="1" onchange="modifierQuantite(${index}, this.value)" class="w-10 h-8 text-center border">
+                </div>
+                <div class="col-span-1 md:col-span-2 text-center font-medium">€${produit.prix * produit.quantite}</div>
+            </div>
+            `;
+
+            cartContainer.innerHTML += produitHTML;
+        });
+
+        document.getElementById("total").innerText = "Total : €" + total;
     }
-  }
-  
-  // Remove item functionality
-  document.querySelectorAll('#cart-items-container .relative button').forEach(button => {
-    button.addEventListener('click', () => {
-      const item = button.closest('.grid');
-      item.classList.add('animate__animated', 'animate__fadeOutRight');
-      
-      item.addEventListener('animationend', () => {
-        item.remove();
-        
-        // Check if cart is empty
-        if (document.querySelectorAll('#cart-items-container .grid').length === 0) {
-          document.getElementById('cart-items-container').classList.add('hidden');
-          document.getElementById('empty-cart-message').classList.remove('hidden');
-        }
-      });
-    });
-  });
-  
-  // Clear cart functionality
-  document.querySelector('button:contains("Vider le panier")').addEventListener('click', () => {
-    const cartItems = document.querySelectorAll('#cart-items-container .grid');
-    
-    cartItems.forEach((item, index) => {
-      setTimeout(() => {
-        item.classList.add('animate__animated', 'animate__fadeOutRight');
-        
-        item.addEventListener('animationend', () => {
-          item.remove();
-          
-          // Check if this is the last item
-          if (document.querySelectorAll('#cart-items-container .grid').length === 0) {
-            document.getElementById('cart-items-container').classList.add('hidden');
-            document.getElementById('empty-cart-message').classList.remove('hidden');
-          }
-        });
-      }, index * 100); // Stagger the animations
-    });
-  });
-  
-  // Fix for the button selector that doesn't work with standard querySelector
-  if (!document.querySelector('button:contains("Vider le panier")')) {
-    document.querySelectorAll('button').forEach(button => {
-      if (button.textContent.includes('Vider le panier')) {
-        button.addEventListener('click', () => {
-          const cartItems = document.querySelectorAll('#cart-items-container .grid');
-          
-          cartItems.forEach((item, index) => {
-            setTimeout(() => {
-              item.classList.add('animate__animated', 'animate__fadeOutRight');
-              
-              item.addEventListener('animationend', () => {
-                item.remove();
-                
-                // Check if this is the last item
-                if (document.querySelectorAll('#cart-items-container .grid').length === 0) {
-                  document.getElementById('cart-items-container').classList.add('hidden');
-                  document.getElementById('empty-cart-message').classList.remove('hidden');
-                }
-              });
-            }, index * 100); // Stagger the animations
-          });
-        });
-      }
-    });
-  }
+});
+
+// Supprimer un produit du panier
+function supprimerDuPanier(index) {
+    let panier = JSON.parse(localStorage.getItem("panier")) || [];
+    panier.splice(index, 1);
+    localStorage.setItem("panier", JSON.stringify(panier));
+    location.reload();
+}
+
+// Modifier la quantité
+function modifierQuantite(index, nouvelleQuantite) {
+    let panier = JSON.parse(localStorage.getItem("panier")) || [];
+    panier[index].quantite = parseInt(nouvelleQuantite);
+    localStorage.setItem("panier", JSON.stringify(panier));
+    location.reload();
+}
+
 </script>
 </htmlCode>
 <htmlCode>
